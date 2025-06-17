@@ -20,5 +20,22 @@ export const useToast = () => {
     }
   };
 
-  return { toast };
+  // Return empty toasts array since we're using sonner directly
+  return { 
+    toast,
+    toasts: [] // Empty array to satisfy the Toaster component
+  };
+};
+
+// Export the toast function directly as well
+export const toast = ({ title, description, variant = "default" }: ToastProps) => {
+  if (variant === "destructive") {
+    sonnerToast.error(title || "Error", {
+      description,
+    });
+  } else {
+    sonnerToast.success(title || "Success", {
+      description,
+    });
+  }
 };
