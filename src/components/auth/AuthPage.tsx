@@ -1,13 +1,12 @@
 
 import { SignIn, SignUp } from '@clerk/clerk-react';
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 
 export function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const { isSignedIn } = useAuth();
-  const navigate = useNavigate();
 
   if (isSignedIn) {
     return <Navigate to="/dashboard" replace />;
@@ -56,8 +55,8 @@ export function AuthPage() {
                     card: "shadow-none border-0"
                   }
                 }}
-                redirectUrl="/dashboard"
-                signInUrl="/auth"
+                forceRedirectUrl="/dashboard"
+                signInFallbackRedirectUrl="/dashboard"
               />
             ) : (
               <SignIn 
@@ -67,8 +66,8 @@ export function AuthPage() {
                     card: "shadow-none border-0"
                   }
                 }}
-                redirectUrl="/dashboard"
-                signUpUrl="/auth"
+                forceRedirectUrl="/dashboard"
+                signUpFallbackRedirectUrl="/dashboard"
               />
             )}
           </div>

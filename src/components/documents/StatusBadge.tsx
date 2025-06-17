@@ -1,50 +1,39 @@
 
 import { Database } from '@/integrations/supabase/types';
 
-type DocumentStatus = Database['public']['Enums']['document_status'];
+type Status = Database['public']['Enums']['document_status'];
 
 interface StatusBadgeProps {
-  status: DocumentStatus;
-  className?: string;
+  status: Status;
 }
 
-export function StatusBadge({ status, className = '' }: StatusBadgeProps) {
-  const getStatusConfig = (status: DocumentStatus) => {
+export function StatusBadge({ status }: StatusBadgeProps) {
+  const getStatusConfig = (status: Status) => {
     switch (status) {
       case 'valid':
         return {
-          text: 'Valid',
-          bgColor: 'bg-green-100',
-          textColor: 'text-green-800',
-          dotColor: 'bg-green-400'
+          label: 'Valid',
+          className: 'bg-green-100 text-green-800 border-green-200'
         };
       case 'expiring_soon':
         return {
-          text: 'Expiring Soon',
-          bgColor: 'bg-orange-100',
-          textColor: 'text-orange-800',
-          dotColor: 'bg-orange-400'
+          label: 'Expiring Soon',
+          className: 'bg-orange-100 text-orange-800 border-orange-200'
         };
       case 'expired':
         return {
-          text: 'Expired',
-          bgColor: 'bg-red-100',
-          textColor: 'text-red-800',
-          dotColor: 'bg-red-400'
+          label: 'Expired',
+          className: 'bg-red-100 text-red-800 border-red-200'
         };
       case 'processing':
         return {
-          text: 'Processing',
-          bgColor: 'bg-gray-100',
-          textColor: 'text-gray-800',
-          dotColor: 'bg-gray-400 animate-pulse'
+          label: 'Processing',
+          className: 'bg-gray-100 text-gray-800 border-gray-200'
         };
       default:
         return {
-          text: 'Unknown',
-          bgColor: 'bg-gray-100',
-          textColor: 'text-gray-800',
-          dotColor: 'bg-gray-400'
+          label: 'Unknown',
+          className: 'bg-gray-100 text-gray-800 border-gray-200'
         };
     }
   };
@@ -52,9 +41,8 @@ export function StatusBadge({ status, className = '' }: StatusBadgeProps) {
   const config = getStatusConfig(status);
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bgColor} ${config.textColor} ${className}`}>
-      <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${config.dotColor}`}></span>
-      {config.text}
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.className}`}>
+      {config.label}
     </span>
   );
 }

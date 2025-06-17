@@ -4,9 +4,8 @@ import { useUser } from '@clerk/clerk-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DocumentUpload } from '@/components/documents/DocumentUpload';
 import { DocumentCard } from '@/components/documents/DocumentCard';
-import { StatusBadge } from '@/components/documents/StatusBadge';
 import { Database } from '@/integrations/supabase/types';
-import { Grid3X3, List, Filter, Upload } from 'lucide-react';
+import { Grid3X3, List, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type Document = Database['public']['Tables']['documents']['Row'];
