@@ -52,22 +52,22 @@ export function AuthPage() {
                 appearance={{
                   elements: {
                     rootBox: "mx-auto",
-                    card: "shadow-none border-0"
+                    card: "shadow-none border-0 bg-transparent"
                   }
                 }}
-                forceRedirectUrl="/dashboard"
-                signInFallbackRedirectUrl="/dashboard"
+                signInUrl="/auth"
+                fallbackRedirectUrl="/dashboard"
               />
             ) : (
               <SignIn 
                 appearance={{
                   elements: {
                     rootBox: "mx-auto",
-                    card: "shadow-none border-0"
+                    card: "shadow-none border-0 bg-transparent"
                   }
                 }}
-                forceRedirectUrl="/dashboard"
-                signUpFallbackRedirectUrl="/dashboard"
+                signUpUrl="/auth"
+                fallbackRedirectUrl="/dashboard"
               />
             )}
           </div>
