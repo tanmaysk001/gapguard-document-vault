@@ -14,7 +14,7 @@ interface UploadFile {
 }
 
 export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => void }) {
-  const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
+  const [filesToUpload, setFilesToUpload] = useState<UploadFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { user } = useUser();
   const { toast } = useToast();
@@ -25,7 +25,7 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
       id: Math.random().toString(36).substring(7),
       progress: 0
     }));
-    setUploadFiles(prev => [...prev, ...newFiles]);
+    setFilesToUpload(prev => [...prev, ...newFiles]);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -40,22 +40,22 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
   });
 
   const removeFile = (id: string) => {
-    setUploadFiles(prev => prev.filter(f => f.id !== id));
+    setFilesToUpload(prev => prev.filter(f => f.id !== id));
   };
 
-  const uploadFiles = async () => {
-    if (!user || uploadFiles.length === 0) return;
+  const handleUploadFiles = async () => {
+    if (!user || filesToUpload.length === 0) return;
 
     setIsUploading(true);
     
-    for (const uploadFile of uploadFiles) {
+    for (const uploadFile of filesToUpload) {
       try {
         const fileExt = uploadFile.file.name.split('.').pop();
         const fileName = `${uploadFile.file.name}`;
         const filePath = `${user.id}/${fileName}`;
 
         // Update progress
-        setUploadFiles(prev => 
+        setFilesToUpload(prev => 
           prev.map(f => f.id === uploadFile.id ? { ...f, progress: 30 } : f)
         );
 
@@ -66,7 +66,7 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
 
         if (uploadError) throw uploadError;
 
-        setUploadFiles(prev => 
+        setFilesToUpload(prev => 
           prev.map(f => f.id === uploadFile.id ? { ...f, progress: 60 } : f)
         );
 
@@ -89,13 +89,13 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
 
         if (dbError) throw dbError;
 
-        setUploadFiles(prev => 
+        setFilesToUpload(prev => 
           prev.map(f => f.id === uploadFile.id ? { ...f, progress: 100 } : f)
         );
 
       } catch (error) {
         console.error('Upload error:', error);
-        setUploadFiles(prev => 
+        setFilesToUpload(prev => 
           prev.map(f => f.id === uploadFile.id ? { 
             ...f, 
             error: error instanceof Error ? error.message : 'Upload failed' 
@@ -107,7 +107,7 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
     setIsUploading(false);
     
     setTimeout(() => {
-      setUploadFiles([]);
+      setFilesToUpload([]);
       onUploadComplete?.();
       toast({
         title: "Upload Complete",
@@ -145,12 +145,12 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
         </p>
       </div>
 
-      {uploadFiles.length > 0 && (
+      {filesToUpload.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-gray-900">Files to upload</h3>
             <button
-              onClick={uploadFiles}
+              onClick={handleUploadFiles}
               disabled={isUploading}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
             >
@@ -159,7 +159,7 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
           </div>
 
           <div className="space-y-2">
-            {uploadFiles.map((uploadFile) => (
+            {filesToUpload.map((uploadFile) => (
               <div key={uploadFile.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
                 <div className="flex items-center space-x-3 flex-1">
                   {getFileIcon(uploadFile.file.type)}
