@@ -1,4 +1,3 @@
-
 -- Create enum for document status
 CREATE TYPE document_status AS ENUM ('processing', 'valid', 'expiring_soon', 'expired');
 
@@ -62,35 +61,43 @@ AS $$
 $$;
 
 -- RLS Policies for documents
+DROP POLICY IF EXISTS "Users can manage their own documents" ON documents;
 CREATE POLICY "Users can manage their own documents" ON documents
-  FOR ALL USING (user_id = auth.jwt() ->> 'sub');
+  FOR ALL USING (user_id = auth.uid());
 
 -- RLS Policies for document_rules
+DROP POLICY IF EXISTS "Users can manage their own rules" ON document_rules;
 CREATE POLICY "Users can manage their own rules" ON document_rules
-  FOR ALL USING (user_id = auth.jwt() ->> 'sub');
+  FOR ALL USING (user_id = auth.uid());
 
 -- RLS Policies for user_roles
+DROP POLICY IF EXISTS "Users can view their own roles" ON user_roles;
 CREATE POLICY "Users can view their own roles" ON user_roles
-  FOR SELECT USING (user_id = auth.jwt() ->> 'sub');
+  FOR SELECT USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Admins can manage all roles" ON user_roles;
 CREATE POLICY "Admins can manage all roles" ON user_roles
-  FOR ALL USING (has_role(auth.jwt() ->> 'sub', 'admin'));
+  FOR ALL USING (has_role(auth.uid(), 'admin'));
 
 -- Create storage bucket for documents
 INSERT INTO storage.buckets (id, name, public) VALUES ('documents', 'documents', false);
 
 -- Storage policies
+DROP POLICY IF EXISTS "Users can upload their own documents" ON storage.objects;
 CREATE POLICY "Users can upload their own documents" ON storage.objects
-  FOR INSERT WITH CHECK (bucket_id = 'documents' AND (storage.foldername(name))[1] = auth.jwt() ->> 'sub');
+  FOR INSERT WITH CHECK (bucket_id = 'documents' AND (storage.foldername(name))[1] = auth.uid());
 
+DROP POLICY IF EXISTS "Users can view their own documents" ON storage.objects;
 CREATE POLICY "Users can view their own documents" ON storage.objects
-  FOR SELECT USING (bucket_id = 'documents' AND (storage.foldername(name))[1] = auth.jwt() ->> 'sub');
+  FOR SELECT USING (bucket_id = 'documents' AND (storage.foldername(name))[1] = auth.uid());
 
+DROP POLICY IF EXISTS "Users can update their own documents" ON storage.objects;
 CREATE POLICY "Users can update their own documents" ON storage.objects
-  FOR UPDATE USING (bucket_id = 'documents' AND (storage.foldername(name))[1] = auth.jwt() ->> 'sub');
+  FOR UPDATE USING (bucket_id = 'documents' AND (storage.foldername(name))[1] = auth.uid());
 
+DROP POLICY IF EXISTS "Users can delete their own documents" ON storage.objects;
 CREATE POLICY "Users can delete their own documents" ON storage.objects
-  FOR DELETE USING (bucket_id = 'documents' AND (storage.foldername(name))[1] = auth.jwt() ->> 'sub');
+  FOR DELETE USING (bucket_id = 'documents' AND (storage.foldername(name))[1] = auth.uid());
 
 -- Enable realtime for documents table
 ALTER TABLE documents REPLICA IDENTITY FULL;

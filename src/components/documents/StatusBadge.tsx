@@ -1,44 +1,59 @@
-
 import { Database } from '@/integrations/supabase/types';
 
-type Status = Database['public']['Enums']['document_status'];
+type Document = Database['public']['Tables']['documents']['Row'];
 
 interface StatusBadgeProps {
-  status: Status;
+  document: Document;
 }
 
-export function StatusBadge({ status }: StatusBadgeProps) {
-  const getStatusConfig = (status: Status) => {
-    switch (status) {
-      case 'valid':
-        return {
-          label: 'Valid',
-          className: 'bg-green-100 text-green-800 border-green-200'
-        };
-      case 'expiring_soon':
-        return {
-          label: 'Expiring Soon',
-          className: 'bg-orange-100 text-orange-800 border-orange-200'
-        };
-      case 'expired':
-        return {
-          label: 'Expired',
-          className: 'bg-red-100 text-red-800 border-red-200'
-        };
-      case 'processing':
-        return {
-          label: 'Processing',
-          className: 'bg-gray-100 text-gray-800 border-gray-200'
-        };
-      default:
-        return {
-          label: 'Unknown',
-          className: 'bg-gray-100 text-gray-800 border-gray-200'
-        };
+export function StatusBadge({ document }: StatusBadgeProps) {
+  const getStatusConfig = (doc: Document) => {
+    // If the document is still processing, that's the highest priority status.
+    if (doc.status === 'processing') {
+      return {
+        label: 'Processing',
+        className: 'bg-blue-100 text-blue-800 border-blue-200 animate-pulse'
+      };
     }
+
+    const { expiry_date } = doc;
+    if (!expiry_date) {
+      return {
+        label: 'Valid',
+        className: 'bg-green-100 text-green-800 border-green-200'
+      };
+    }
+
+    const now = new Date();
+    const expiry = new Date(expiry_date);
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(now.getDate() + 30);
+    
+    // Set hours to 0 to compare dates only
+    now.setHours(0, 0, 0, 0);
+    expiry.setHours(0, 0, 0, 0);
+    
+    if (expiry < now) {
+      return {
+        label: 'Expired',
+        className: 'bg-red-100 text-red-800 border-red-200'
+      };
+    }
+    
+    if (expiry <= thirtyDaysFromNow) {
+      return {
+        label: 'Expiring Soon',
+        className: 'bg-orange-100 text-orange-800 border-orange-200'
+      };
+    }
+    
+    return {
+      label: 'Valid',
+      className: 'bg-green-100 text-green-800 border-green-200'
+    };
   };
 
-  const config = getStatusConfig(status);
+  const config = getStatusConfig(document);
 
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.className}`}>
