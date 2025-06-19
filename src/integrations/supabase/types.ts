@@ -41,13 +41,17 @@ export type Database = {
           confidence_score: number | null
           created_at: string | null
           doc_category: string | null
+          doc_type: string | null
+          effective_date: string | null
           expiry_date: string | null
           file_name: string
+          file_path: string | null
           file_size: number | null
           file_type: string | null
           file_url: string
           id: string
           issue_date: string | null
+          reasoning: string | null
           status: Database["public"]["Enums"]["document_status"] | null
           updated_at: string | null
           user_id: string
@@ -56,13 +60,17 @@ export type Database = {
           confidence_score?: number | null
           created_at?: string | null
           doc_category?: string | null
+          doc_type?: string | null
+          effective_date?: string | null
           expiry_date?: string | null
           file_name: string
+          file_path?: string | null
           file_size?: number | null
           file_type?: string | null
           file_url: string
           id?: string
           issue_date?: string | null
+          reasoning?: string | null
           status?: Database["public"]["Enums"]["document_status"] | null
           updated_at?: string | null
           user_id: string
@@ -71,13 +79,17 @@ export type Database = {
           confidence_score?: number | null
           created_at?: string | null
           doc_category?: string | null
+          doc_type?: string | null
+          effective_date?: string | null
           expiry_date?: string | null
           file_name?: string
+          file_path?: string | null
           file_size?: number | null
           file_type?: string | null
           file_url?: string
           id?: string
           issue_date?: string | null
+          reasoning?: string | null
           status?: Database["public"]["Enums"]["document_status"] | null
           updated_at?: string | null
           user_id?: string
@@ -105,6 +117,39 @@ export type Database = {
         }
         Relationships: []
       }
+      gaps: {
+        Row: {
+          id: string;
+          user_id: string;
+          checklist_id: string;
+          required_doc_type: string;
+          status: 'missing' | 'expired' | 'expiring_soon' | 'valid';
+          doc_id: string | null;
+          days_left: number | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          checklist_id: string;
+          required_doc_type: string;
+          status: 'missing' | 'expired' | 'expiring_soon' | 'valid';
+          doc_id?: string | null;
+          days_left?: number | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          checklist_id?: string;
+          required_doc_type?: string;
+          status?: 'missing' | 'expired' | 'expiring_soon' | 'valid';
+          doc_id?: string | null;
+          days_left?: number | null;
+          created_at?: string | null;
+        };
+        Relationships: [];
+      };
     }
     Views: {
       [_ in never]: never

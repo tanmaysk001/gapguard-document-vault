@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useSupabase } from '@/hooks/useSupabase';
 import { DocumentUpload } from '@/components/documents/DocumentUpload';
 import { DocumentCard } from '@/components/documents/DocumentCard';
+import { StatusBadge } from '@/components/documents/StatusBadge';
 import { Database } from '@/integrations/supabase/types';
 import { Grid3X3, List, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +19,7 @@ const filterOptions = [
 ];
 
 export default function Dashboard() {
+  const supabase = useSupabase();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -26,39 +27,58 @@ export default function Dashboard() {
   const [showUpload, setShowUpload] = useState(false);
   const { user } = useUser();
   const { toast } = useToast();
+  const [gaps, setGaps] = useState<Database['public']['Tables']['gaps']['Row'][]>([]);
+  const [gapsLoading, setGapsLoading] = useState(true);
 
-  const fetchDocuments = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+  useEffect(() => {
+    if (supabase) {
+      const fetchDocuments = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('documents')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setDocuments(data || []);
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load documents",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+        if (error) {
+          console.error('Error fetching documents:', error);
+          toast({
+            title: "Error fetching documents",
+            description: error.message,
+            variant: "destructive"
+          });
+        } else {
+          setDocuments(data || []);
+        }
+        setLoading(false);
+      };
+
+      const fetchGaps = async () => {
+        setGapsLoading(true);
+        const { data, error } = await supabase
+          .from('gaps')
+          .select('*');
+
+        if (error) {
+          console.error('Error fetching gaps:', error);
+          toast({
+            title: "Error fetching gaps",
+            description: error.message,
+            variant: "destructive"
+          });
+        } else {
+          setGaps(data || []);
+        }
+        setGapsLoading(false);
+      };
+      
+      fetchDocuments();
+      fetchGaps();
     }
-  };
+  }, [supabase, user]);
 
   useEffect(() => {
-    fetchDocuments();
-  }, [user]);
+    if (!user || !supabase) return;
 
-  useEffect(() => {
-    if (!user) return;
-
-    // Set up realtime subscription
     const channel = supabase
       .channel('document-changes')
       .on(
@@ -66,11 +86,17 @@ export default function Dashboard() {
         {
           event: '*',
           schema: 'public',
-          table: 'documents',
-          filter: `user_id=eq.${user.id}`
+          table: 'documents'
         },
-        () => {
-          fetchDocuments();
+        (payload) => {
+          console.log('Change received!', payload);
+          supabase.from('documents').select('*').order('created_at', { ascending: false }).then(({ data, error }) => {
+            if (error) {
+              console.error('Error re-fetching documents:', error);
+            } else {
+              setDocuments(data || []);
+            }
+          });
         }
       )
       .subscribe();
@@ -78,7 +104,7 @@ export default function Dashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, supabase]);
 
   const filteredDocuments = documents.filter(doc => {
     if (activeFilter === 'all') return true;
@@ -97,37 +123,113 @@ export default function Dashboard() {
 
   const stats = getDocumentStats();
 
-  const handleView = (document: Document) => {
-    window.open(document.file_url, '_blank');
+  // Group documents by their type for rendering
+  const groupedDocuments = filteredDocuments.reduce((acc, doc) => {
+    const docType = doc.doc_type || 'Unclassified';
+    if (!acc[docType]) {
+      acc[docType] = [];
+    }
+    acc[docType].push(doc);
+    return acc;
+  }, {} as Record<string, Document[]>);
+
+  const handleView = async (document: Document) => {
+    let filePath = document.file_path;
+    if (!filePath) {
+      filePath = `${document.user_id}/${document.file_name}`;
+    }
+
+    if (!filePath || filePath.trim() === '') {
+        alert("Error: File path is empty. Cannot view document.");
+        return;
+    }
+
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(filePath, 60); // 60 seconds validity
+
+    if (error || !data?.signedUrl) {
+      alert('Could not create a secure link for this document.');
+      console.error("Error creating signed URL:", error);
+      return;
+    }
+    window.open(data.signedUrl, '_blank');
   };
 
-  const handleDownload = (document: Document) => {
+  const handleDownload = async (document: Document) => {
+    let filePath = document.file_path;
+    if (!filePath) {
+      filePath = `${document.user_id}/${document.file_name}`;
+    }
+
+    if (!filePath || filePath.trim() === '') {
+        alert("Error: File path is empty. Cannot download document.");
+        return;
+    }
+
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(filePath, 60, {
+        download: true,
+      });
+
+    if (error || !data?.signedUrl) {
+      alert('Could not create a secure download link for this document.');
+      console.error("Error creating signed URL for download:", error);
+      return;
+    }
+
     const link = window.document.createElement('a');
-    link.href = document.file_url;
-    link.download = document.file_name;
+    link.href = data.signedUrl;
+    // The 'download' attribute is handled by the signed URL 'download:true' option
     link.click();
   };
 
   const handleDelete = async (document: Document) => {
-    if (!confirm('Are you sure you want to delete this document?')) return;
+    if (!confirm('Are you sure you want to delete this document? This action is irreversible.')) return;
+
+    if (!document.file_path) {
+      toast({ title: "Error", description: "File path is missing, cannot delete from storage.", variant: "destructive" });
+      return;
+    }
 
     try {
-      const { error } = await supabase
+      // Step 1: Delete the file from Supabase Storage
+      const { error: storageError } = await supabase.storage
+        .from('documents')
+        .remove([document.file_path]);
+
+      if (storageError) {
+        // Log the error but still attempt to delete the DB record if the file doesn't exist.
+        // This handles cases where the storage object was already deleted manually.
+        if (storageError.message !== 'The resource was not found') {
+          throw new Error(`Storage Error: ${storageError.message}`);
+        }
+      }
+
+      // Step 2: Delete the record from the database
+      const { error: dbError } = await supabase
         .from('documents')
         .delete()
         .eq('id', document.id);
 
-      if (error) throw error;
+      if (dbError) {
+        throw new Error(`Database Error: ${dbError.message}`);
+      }
 
       toast({
         title: "Success",
-        description: "Document deleted successfully"
+        description: `${document.file_name} has been deleted.`,
       });
-    } catch (error) {
+      
+      // The real-time subscription will handle the UI update automatically.
+      // No need to call fetchDocuments() manually.
+
+    } catch (error: any) {
       console.error('Error deleting document:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete document",
+        title: "Deletion Failed",
+        description: error.message,
         variant: "destructive"
       });
     }
@@ -161,9 +263,72 @@ export default function Dashboard() {
       {/* Upload Section */}
       {showUpload && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <DocumentUpload onUploadComplete={() => setShowUpload(false)} />
+          <DocumentUpload onUploadComplete={() => {
+            setShowUpload(false);
+            supabase.from('documents').select('*').order('created_at', { ascending: false }).then(({ data, error }) => {
+              if (error) {
+                console.error('Error re-fetching documents:', error);
+              } else {
+                setDocuments(data || []);
+              }
+            });
+          }} />
         </div>
       )}
+
+      {/* Gaps Section */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold mb-2">Compliance Gaps</h2>
+        {gapsLoading ? (
+          <div className="text-gray-500">Loading gaps...</div>
+        ) : gaps.length === 0 ? (
+          <div className="text-green-600">No compliance gaps! 🎉</div>
+        ) : (
+          <ul className="space-y-2">
+            {gaps.map(gap => {
+              // Create a mock document object to pass to the StatusBadge
+              const mockDocument: Document = {
+                id: gap.doc_id || gap.id,
+                status: (gap.status === 'missing' ? 'processing' : gap.status) as Database['public']['Enums']['document_status'],
+                expiry_date: null,
+                created_at: gap.created_at,
+                updated_at: new Date().toISOString(),
+                user_id: gap.user_id,
+                file_name: '',
+                file_url: '',
+                file_path: null,
+                file_size: null,
+                file_type: null,
+                doc_type: gap.required_doc_type,
+                doc_category: null,
+                effective_date: null,
+                issue_date: null,
+                confidence_score: null,
+                reasoning: null,
+              };
+
+              // The logic to determine the badge content should be in the badge itself.
+              // Here, we just provide the necessary data.
+              // For days_left, we can display it separately.
+              const badgeLabel = (
+                <span className="flex items-center gap-2">
+                  <StatusBadge document={mockDocument} />
+                  {gap.status !== 'valid' && gap.status !== 'missing' && gap.days_left !== null && (
+                    <span className="text-xs text-gray-500">({gap.days_left} days left)</span>
+                  )}
+                </span>
+              );
+
+              return (
+                <li key={gap.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
+                  <span className="font-medium w-48 capitalize">{gap.required_doc_type.replace(/_/g, ' ')}</span>
+                  {badgeLabel}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -227,41 +392,34 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Documents */}
-      {filteredDocuments.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
-          <p className="text-gray-600 mb-4">
-            {activeFilter === 'all' 
-              ? "Upload your first document to get started"
-              : `No documents with status "${activeFilter}"`
-            }
-          </p>
-          {activeFilter === 'all' && (
-            <button
-              onClick={() => setShowUpload(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Upload Documents
-            </button>
-          )}
+      {/* Document Display Area */}
+      {filteredDocuments.length > 0 ? (
+        <div className="space-y-8">
+          {Object.entries(groupedDocuments).map(([docType, docs]) => (
+            <div key={docType}>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 capitalize">
+                {docType.replace(/_/g, ' ')}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {docs.map(doc => (
+                  <DocumentCard
+                    key={doc.id}
+                    document={doc}
+                    onView={handleView}
+                    onDownload={handleDownload}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
-        <div className={`${
-          viewMode === 'grid' 
-            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-            : 'space-y-4'
-        }`}>
-          {filteredDocuments.map((document) => (
-            <DocumentCard
-              key={document.id}
-              document={document}
-              onView={handleView}
-              onDownload={handleDownload}
-              onDelete={handleDelete}
-            />
-          ))}
+        <div className="text-center py-16 bg-gray-50 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-900">No documents found.</h3>
+          <p className="text-sm text-gray-500 mt-2">
+            Click the "Upload Documents" button to get started.
+          </p>
         </div>
       )}
     </div>

@@ -1,4 +1,3 @@
-
 import { Database } from '@/integrations/supabase/types';
 import { StatusBadge } from './StatusBadge';
 import { FileText, Image, File, Eye, Download, Trash2, MoreVertical } from 'lucide-react';
@@ -100,7 +99,7 @@ export function DocumentCard({ document, onView, onDownload, onDelete }: Documen
       </div>
 
       <div className="space-y-2">
-        <StatusBadge status={document.status} />
+        <StatusBadge document={document} />
         
         {document.doc_category && (
           <p className="text-xs text-gray-600">

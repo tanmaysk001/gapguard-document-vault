@@ -8,6 +8,7 @@ import { MainLayout } from './components/layout/MainLayout';
 import { AuthPage } from './components/auth/AuthPage';
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
+import DocumentsPage from "./pages/Documents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,7 +32,7 @@ const App = () => (
           <Route path="/documents" element={
             <ProtectedRoute>
               <MainLayout>
-                <Dashboard />
+                <DocumentsPage />
               </MainLayout>
             </ProtectedRoute>
           } />
