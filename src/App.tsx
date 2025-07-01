@@ -6,9 +6,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { MainLayout } from './components/layout/MainLayout';
 import { AuthPage } from './components/auth/AuthPage';
+import { ChatBot } from './components/chat/ChatBot';
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
-import DocumentsPage from "./pages/Documents";
+import DocumentsPage from "./pages/Documents.tsx";
+import RulesPage from "./pages/Rules";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +38,13 @@ const App = () => (
               </MainLayout>
             </ProtectedRoute>
           } />
+          <Route path="/rules" element={
+            <ProtectedRoute>
+              <MainLayout>
+                <RulesPage />
+              </MainLayout>
+            </ProtectedRoute>
+          } />
           <Route path="/analytics" element={
             <ProtectedRoute>
               <MainLayout>
@@ -58,6 +67,7 @@ const App = () => (
           } />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <ChatBot />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

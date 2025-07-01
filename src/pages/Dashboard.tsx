@@ -27,54 +27,32 @@ export default function Dashboard() {
   const [showUpload, setShowUpload] = useState(false);
   const { user } = useUser();
   const { toast } = useToast();
-  const [gaps, setGaps] = useState<Database['public']['Tables']['gaps']['Row'][]>([]);
-  const [gapsLoading, setGapsLoading] = useState(true);
 
   useEffect(() => {
     if (supabase) {
-      const fetchDocuments = async () => {
+  const fetchDocuments = async () => {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('documents')
-          .select('*')
-          .order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .order('created_at', { ascending: false });
 
         if (error) {
-          console.error('Error fetching documents:', error);
-          toast({
+      console.error('Error fetching documents:', error);
+      toast({
             title: "Error fetching documents",
             description: error.message,
-            variant: "destructive"
-          });
+        variant: "destructive"
+      });
         } else {
           setDocuments(data || []);
         }
-        setLoading(false);
-      };
+      setLoading(false);
+  };
 
-      const fetchGaps = async () => {
-        setGapsLoading(true);
-        const { data, error } = await supabase
-          .from('gaps')
-          .select('*');
-
-        if (error) {
-          console.error('Error fetching gaps:', error);
-          toast({
-            title: "Error fetching gaps",
-            description: error.message,
-            variant: "destructive"
-          });
-        } else {
-          setGaps(data || []);
-        }
-        setGapsLoading(false);
-      };
-      
-      fetchDocuments();
-      fetchGaps();
+    fetchDocuments();
     }
-  }, [supabase, user]);
+  }, [supabase, user, toast]);
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -122,16 +100,6 @@ export default function Dashboard() {
   };
 
   const stats = getDocumentStats();
-
-  // Group documents by their type for rendering
-  const groupedDocuments = filteredDocuments.reduce((acc, doc) => {
-    const docType = doc.doc_type || 'Unclassified';
-    if (!acc[docType]) {
-      acc[docType] = [];
-    }
-    acc[docType].push(doc);
-    return acc;
-  }, {} as Record<string, Document[]>);
 
   const handleView = async (document: Document) => {
     let filePath = document.file_path;
@@ -265,70 +233,9 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <DocumentUpload onUploadComplete={() => {
             setShowUpload(false);
-            supabase.from('documents').select('*').order('created_at', { ascending: false }).then(({ data, error }) => {
-              if (error) {
-                console.error('Error re-fetching documents:', error);
-              } else {
-                setDocuments(data || []);
-              }
-            });
           }} />
         </div>
       )}
-
-      {/* Gaps Section */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold mb-2">Compliance Gaps</h2>
-        {gapsLoading ? (
-          <div className="text-gray-500">Loading gaps...</div>
-        ) : gaps.length === 0 ? (
-          <div className="text-green-600">No compliance gaps! 🎉</div>
-        ) : (
-          <ul className="space-y-2">
-            {gaps.map(gap => {
-              // Create a mock document object to pass to the StatusBadge
-              const mockDocument: Document = {
-                id: gap.doc_id || gap.id,
-                status: (gap.status === 'missing' ? 'processing' : gap.status) as Database['public']['Enums']['document_status'],
-                expiry_date: null,
-                created_at: gap.created_at,
-                updated_at: new Date().toISOString(),
-                user_id: gap.user_id,
-                file_name: '',
-                file_url: '',
-                file_path: null,
-                file_size: null,
-                file_type: null,
-                doc_type: gap.required_doc_type,
-                doc_category: null,
-                effective_date: null,
-                issue_date: null,
-                confidence_score: null,
-                reasoning: null,
-              };
-
-              // The logic to determine the badge content should be in the badge itself.
-              // Here, we just provide the necessary data.
-              // For days_left, we can display it separately.
-              const badgeLabel = (
-                <span className="flex items-center gap-2">
-                  <StatusBadge document={mockDocument} />
-                  {gap.status !== 'valid' && gap.status !== 'missing' && gap.days_left !== null && (
-                    <span className="text-xs text-gray-500">({gap.days_left} days left)</span>
-                  )}
-                </span>
-              );
-
-              return (
-                <li key={gap.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                  <span className="font-medium w-48 capitalize">{gap.required_doc_type.replace(/_/g, ' ')}</span>
-                  {badgeLabel}
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -356,8 +263,8 @@ export default function Dashboard() {
 
       {/* Filters and View Toggle */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          {filterOptions.map((option) => (
+        <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg">
+          {filterOptions.map(option => (
             <button
               key={option.key}
               onClick={() => setActiveFilter(option.key)}
@@ -394,24 +301,15 @@ export default function Dashboard() {
 
       {/* Document Display Area */}
       {filteredDocuments.length > 0 ? (
-        <div className="space-y-8">
-          {Object.entries(groupedDocuments).map(([docType, docs]) => (
-            <div key={docType}>
-              <h2 className="text-xl font-semibold text-gray-800 mb-4 capitalize">
-                {docType.replace(/_/g, ' ')}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {docs.map(doc => (
-                  <DocumentCard
-                    key={doc.id}
-                    document={doc}
-                    onView={handleView}
-                    onDownload={handleDownload}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredDocuments.map(doc => (
+            <DocumentCard
+              key={doc.id}
+              document={doc}
+              onView={handleView}
+              onDownload={handleDownload}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       ) : (
