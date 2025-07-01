@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { CreateRuleDialog } from '@/components/documents/CreateRuleDialog';
+import { SUPABASE_URL } from '@/config';
 
 type Rule = Database['public']['Tables']['document_rules']['Row'];
 

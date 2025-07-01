@@ -198,12 +198,30 @@ elif [[ "$INSTALL_TYPE" == "1" ]]; then
     if [[ "$CLINE_EDITOR" == "0" ]]; then
         # Cline in Cursor
         print_info "Using Cline Extension in Cursor"
-        CLINE_DIR="$HOME/Library/Application Support/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            CLINE_DIR="$HOME/Library/Application Support/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings"
+        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            CLINE_DIR="$HOME/.config/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings"
+        elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* || "$OSTYPE" == "win32"* ]]; then
+            CLINE_DIR="$APPDATA/Cursor/User/globalStorage/saoudrizwan.claude-dev/settings"
+        else
+            echo "Unsupported OS: $OSTYPE"
+            exit 1
+        fi
         MCP_FILE="$CLINE_DIR/cline_mcp_settings.json"
     else
         # Cline in VS Code
         print_info "Using Cline Extension in VS Code"
-        CLINE_DIR="$HOME/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            CLINE_DIR="$HOME/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings"
+        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            CLINE_DIR="$HOME/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings"
+        elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* || "$OSTYPE" == "win32"* ]]; then
+            CLINE_DIR="$APPDATA/Code/User/globalStorage/saoudrizwan.claude-dev/settings"
+        else
+            echo "Unsupported OS: $OSTYPE"
+            exit 1
+        fi
         MCP_FILE="$CLINE_DIR/cline_mcp_settings.json"
     fi
 elif [[ "$INSTALL_TYPE" == "2" ]]; then
@@ -244,7 +262,17 @@ print_header "Checking dependencies"
 if ! command -v uv &> /dev/null; then
     print_info "Installing UV package manager..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
-    source ~/.zshrc 
+    # Source the correct shell profile if possible
+    SHELL_NAME=$(basename "$SHELL")
+    if [[ "$SHELL_NAME" == "zsh" ]]; then
+        source ~/.zshrc
+    elif [[ "$SHELL_NAME" == "bash" ]]; then
+        source ~/.bashrc
+    elif [[ "$SHELL_NAME" == "fish" ]]; then
+        source ~/.config/fish/config.fish
+    else
+        print_info "Please restart your shell or source your profile to complete UV installation."
+    fi
     print_success "UV installed successfully"
 else
     print_success "UV is already installed"
@@ -257,6 +285,10 @@ if ! command -v jq &> /dev/null; then
         brew install jq
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
         sudo apt-get update && sudo apt-get install -y jq
+    elif [[ "$OSTYPE" == "msys"* || "$OSTYPE" == "cygwin"* || "$OSTYPE" == "win32"* ]]; then
+        print_info "Please install jq manually from https://stedolan.github.io/jq/download/ or using your preferred Windows package manager (e.g., Chocolatey: choco install jq, or winget: winget install jq)."
+    else
+        print_error "Unsupported OS for jq installation: $OSTYPE"
     fi
     print_success "jq installed successfully"
 else
@@ -343,6 +375,12 @@ rm -f "$TEMP_LOG"
 print_header "Installing Playwright browsers"
 print_info "Installing browser binaries for web automation..."
 
+# Check for npm before proceeding
+if ! command -v npm &> /dev/null; then
+    print_error "npm is required but not found. Please install Node.js and npm, then re-run this script."
+    exit 1
+fi
+
 # Simply run playwright install directly
 npm install -g chromium
 npm install -g playwright  
@@ -355,6 +393,8 @@ print_success "Playwright browsers installed successfully"
 print_header "API Key Configuration"
 echo -e "An Operative.sh API key is required for this installation."
 echo -e "If you don't have one, please visit ${BOLD}https://operative.sh${NC} to get your key.\n"
+
+echo -e "${YELLOW}Warning:${NC} Your API key will be stored in plain text in the configuration file. For production or sensitive environments, consider using environment variables or a secure secret manager instead."
 
 API_KEY=""
 while true; do

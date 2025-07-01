@@ -22,10 +22,11 @@ FOR ALL USING (auth.uid()::text = user_id);
 CREATE OR REPLACE FUNCTION public.increment_request_count(p_user_id TEXT)
 RETURNS VOID AS $$
 BEGIN
-    UPDATE public.rate_limit_usage 
-    SET request_count = request_count + 1,
-        last_request_at = NOW()
-    WHERE user_id = p_user_id;
+    INSERT INTO public.rate_limit_usage (user_id, request_count, last_request_at, created_at)
+    VALUES (p_user_id, 1, NOW(), NOW())
+    ON CONFLICT (user_id) DO UPDATE
+    SET request_count = public.rate_limit_usage.request_count + 1,
+        last_request_at = NOW();
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

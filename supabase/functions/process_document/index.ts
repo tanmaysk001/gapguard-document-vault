@@ -338,23 +338,9 @@ serve(async (req) => {
     // 7. Validate extracted text
     validateExtractedText(documentText, fileName);
 
-    // 8. Update the document status to 'valid' now that processing is complete
-    const { error: updateError } = await supabaseAdmin
-      .from("documents")
-      .update({ status: "valid" })
-      .eq("id", docId)
-      .select()
-      .single();
-
-    if (updateError) {
-      console.error("DB Update Error:", updateError);
-      throw new Error(`DB update error: ${updateError.message}`);
-    }
-
-    // 9. Generate embeddings for RAG functionality
+    // 8. Generate embeddings for RAG functionality
     try {
       console.log("Generating embeddings for document...");
-      
       const textChunks = chunkText(documentText, 1000, 100);
       console.log(`Created ${textChunks.length} text chunks for embedding`);
 
@@ -364,7 +350,6 @@ serve(async (req) => {
 
         try {
           const embedding = await generateEmbedding(chunk);
-          
           const { error: embeddingError } = await supabaseAdmin
             .from("document_embeddings")
             .insert({
@@ -378,23 +363,47 @@ serve(async (req) => {
 
           if (embeddingError) {
             console.error(`Error storing embedding for chunk ${i}:`, embeddingError);
+            throw new Error(`Failed to store embedding for chunk ${i}: ${embeddingError.message}`);
           } else {
             console.log(`Successfully stored embedding for chunk ${i + 1}`);
           }
         } catch (chunkError) {
           console.error(`Error processing chunk ${i}:`, chunkError);
+          throw new Error(`Failed to generate embedding for chunk ${i}: ${chunkError instanceof Error ? chunkError.message : String(chunkError)}`);
         }
       }
 
-      console.log("Embedding generation completed");
-    } catch (embeddingError) {
-      console.error("Error during embedding generation:", embeddingError);
-    }
+      // Only mark document as valid if all embeddings succeeded
+      const { error: updateError } = await supabaseAdmin
+        .from("documents")
+        .update({ status: "valid" })
+        .eq("id", docId)
+        .select()
+        .single();
 
-    return new Response(JSON.stringify({ success: true, documentId: docId }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+      if (updateError) {
+        console.error("DB Update Error:", updateError);
+        throw new Error(`DB update error: ${updateError.message}`);
+      }
+
+      console.log("Embedding generation completed and document marked as valid");
+      return new Response(JSON.stringify({ success: true, documentId: docId }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    } catch (embeddingError) {
+      // If embedding fails, document remains in 'processing' status
+      console.error("Error during embedding generation:", embeddingError);
+      return new Response(JSON.stringify({
+        success: false,
+        documentId: docId,
+        error: embeddingError instanceof Error ? embeddingError.message : String(embeddingError),
+        message: "Embedding generation failed. Document remains in 'processing' status."
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      });
+    }
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

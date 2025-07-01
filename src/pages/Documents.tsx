@@ -13,7 +13,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from '@/components/ui/button';
-
 import { Input } from '@/components/ui/input';
 
 type Document = Database['public']['Tables']['documents']['Row'];
@@ -29,19 +28,18 @@ export default function DocumentsPage() {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
 
   useEffect(() => {
-    if (supabase) {
-      const fetchDocuments = async () => {
-        setLoading(true);
-        const { data, error } = await supabase.from('documents').select('*');
-        if (error) {
-          toast({ title: "Error fetching documents", description: error.message, variant: "destructive" });
-        } else {
-          setDocuments(data || []);
-        }
-        setLoading(false);
-      };
-      fetchDocuments();
-    }
+    if (!supabase) return;
+    const fetchDocuments = async () => {
+      setLoading(true);
+      const { data, error } = await supabase.from('documents').select('*');
+      if (error) {
+        toast({ title: "Error fetching documents", description: error.message, variant: "destructive" });
+      } else {
+        setDocuments(data || []);
+      }
+      setLoading(false);
+    };
+    fetchDocuments();
   }, [supabase, toast]);
   
   const handleSuggestRules = async () => {
@@ -70,28 +68,41 @@ export default function DocumentsPage() {
     }
   };
   
-  const handleDelete = async (document: Document) => {
-    if (!supabase || !document.file_path) return;
-
-    const { error } = await supabase.storage.from('documents').remove([document.file_path]);
-    if (error && error.message !== 'The resource was not found') {
-      return toast({ title: "Storage Error", description: error.message, variant: "destructive" });
+  const handleDelete = async (document: Document): Promise<void> => {
+    if (!supabase) return;
+    if (!document.file_path) {
+      toast({ title: "Error", description: "File path is missing, cannot delete from storage.", variant: "destructive" });
+      return;
     }
 
+    // Step 1: Delete the record from the database
     const { error: dbError } = await supabase.from('documents').delete().eq('id', document.id);
     if (dbError) {
-      return toast({ title: "Database Error", description: dbError.message, variant: "destructive" });
+      toast({ title: "Database Error", description: dbError.message, variant: "destructive" });
+      return;
+    }
+
+    // Step 2: Delete the file from Supabase Storage
+    const { error: storageError } = await supabase.storage.from('documents').remove([document.file_path]);
+    if (storageError && storageError.message !== 'The resource was not found') {
+      // Log the error but don't rollback DB deletion
+      console.error('Storage deletion failed after DB delete:', storageError);
+      toast({ title: "Warning", description: "Database record deleted, but failed to remove file from storage.", variant: "destructive" });
     }
 
     setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== document.id));
     toast({ title: "Success", description: `${document.file_name} deleted.` });
   };
   
-  const handleView = async (document: Document) => {
+  const handleView = async (document: Document): Promise<void> => {
     if (!supabase) return;
+    if (!document.file_path) {
+      toast({ title: "Error", description: "File path is missing, cannot view document.", variant: "destructive" });
+      return;
+    }
     const { data, error } = await supabase.storage
       .from('documents')
-      .createSignedUrl(document.file_path!, 60);
+      .createSignedUrl(document.file_path, 60);
 
     if (error || !data?.signedUrl) {
       toast({ title: "Error", description: "Could not create a secure link.", variant: "destructive" });
@@ -100,11 +111,15 @@ export default function DocumentsPage() {
     window.open(data.signedUrl, '_blank');
   };
 
-  const handleDownload = async (document: Document) => {
+  const handleDownload = async (document: Document): Promise<void> => {
     if (!supabase) return;
+    if (!document.file_path) {
+      toast({ title: "Error", description: "File path is missing, cannot download document.", variant: "destructive" });
+      return;
+    }
     const { data, error } = await supabase.storage
       .from('documents')
-      .createSignedUrl(document.file_path!, 60, { download: true });
+      .createSignedUrl(document.file_path, 60, { download: true });
 
     if (error || !data?.signedUrl) {
       toast({ title: "Error", description: "Could not create a download link.", variant: "destructive" });

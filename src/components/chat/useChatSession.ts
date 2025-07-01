@@ -3,6 +3,7 @@ import { useSupabase } from '@/hooks/useSupabase';
 import { useAuth } from '@clerk/clerk-react';
 import { Message } from './ChatMessage';
 import { useToast } from '@/hooks/use-toast';
+import { SUPABASE_URL } from '@/config';
 
 export function useChatSession() {
   const supabase = useSupabase();
@@ -60,7 +61,10 @@ export function useChatSession() {
           if (messagesError) throw messagesError;
           
           if (existingMessages) {
-            setMessages(existingMessages);
+            setMessages(existingMessages.map(msg => ({
+              ...msg,
+              role: msg.role as 'user' | 'assistant'
+            })));
           }
         } else {
           // Create new session
@@ -99,11 +103,22 @@ export function useChatSession() {
     };
 
     initSession();
-  }, [supabase, userId]);
-
+  }, [supabase, userId, toast]);
   const sendMessage = async (content: string) => {
     if (!supabase || !sessionId || !userId) return;
-    const token = await getToken();
+    let token: string | null = null;
+    try {
+      token = await getToken();
+      if (!token) throw new Error('No token returned');
+    } catch (tokenError) {
+      setError('Failed to retrieve authentication token');
+      toast({
+        title: "Authentication Error",
+        description: "Could not retrieve authentication token. Please log in again.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
@@ -133,8 +148,7 @@ export function useChatSession() {
       if (saveError) throw saveError;
 
       // Call the chat_with_documents edge function
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/chat_with_documents`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/chat_with_documents`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

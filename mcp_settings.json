@@ -10,7 +10,7 @@
         "webEvalAgent"
       ],
       "env": {
-        "OPERATIVE_API_KEY": "<YOUR_API_KEY_HERE>"
+        "OPERATIVE_API_KEY": "${OPERATIVE_API_KEY}"      
       }
     }
   }

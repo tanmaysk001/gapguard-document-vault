@@ -1,7 +1,6 @@
 // @deno-types="https://deno.land/std@0.168.0/http/server.ts"
 // @deno-types="https://esm.sh/@google/generative-ai@0.5.0"
 // @deno-types="https://deno.land/x/zod@v3.22.2/mod.ts"
-// deno-lint-ignore-file no-explicit-any
 // @ts-ignore: Deno global
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "https://esm.sh/@google/generative-ai@0.5.0";
 import { z } from "https://deno.land/x/zod@v3.22.2/mod.ts";

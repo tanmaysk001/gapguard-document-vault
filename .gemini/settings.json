@@ -1,21 +1,17 @@
 {
-    "mcpServers": {
-    // Supabase MCP
-      "supabase": {
-        "command": "cmd",
-        "args": [
-          "/c",
-          "npx",
-          "-y",
-          "@supabase/mcp-server-supabase@latest",
-          "--access-token",
-          "${SUPABASE_ACCESS_TOKEN}"
-        ]
-      },
-      // Context7 MCP
-      "context7": {
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--access-token",
+        "${SUPABASE_ACCESS_TOKEN}"
+      ]
+    },
+    "context7": {
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
-        }
     }
   }
+}

@@ -154,7 +154,7 @@ export type Database = {
           expiry_date: string | null
           file_name: string
           file_path: string | null
-          file_size:. number | null
+          file_size: number | null
           file_type: string | null
           file_url: string
           id: string
@@ -308,7 +308,7 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string | null
-          id:. string
+          id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }

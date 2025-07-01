@@ -3,9 +3,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jwtVerify, createRemoteJWKSet } from "https://deno.land/x/jose@v4.14.4/index.ts";
-import { Database } from "./lib/database.types.ts";
-// We will need a new function in our AI library for this.
-import { suggestRules } from "./lib/ai.ts"; 
+import { Database } from "../lib/database.types.ts";
+import { suggestRules } from "../lib/ai.ts";
 
 // --- Environment Variable Validation ---
 const REQUIRED_ENV_VARS = [
@@ -145,7 +144,7 @@ serve(async (req) => {
     );
 
     // Filter out suggestions that already exist (case-insensitive)
-    const newSuggestions = suggestions.filter(s => 
+    const newSuggestions = suggestions.filter((s: { rule_name: string; reason?: string }) => 
         !existingRuleNames.has(s.rule_name.toLowerCase().trim())
     );
 
@@ -157,10 +156,10 @@ serve(async (req) => {
     const limitedSuggestions = newSuggestions.slice(0, 5);
 
     // 4. Prepare suggestions for insertion
-    const rulesToInsert = limitedSuggestions.map(s => ({
+    const rulesToInsert = limitedSuggestions.map((s: { rule_name: string; reason?: string }) => ({
         user_id: userId,
         rule_name: s.rule_name,
-        description: s.reason, // Fixed: database column is 'description', not 'reason'
+        description: s.reason ? s.reason : '', // Fallback to empty string if missing
         status: 'suggested' as const,
         required_doc_types: [s.rule_name] // A sensible default
     }));

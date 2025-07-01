@@ -13,13 +13,7 @@ This document outlines the steps to perform a full system review of the GapGuard
     ```bash
     npx supabase stop --no-backup
     ```
-2.  **Prune Docker System:** (Warning: This will remove all unused Docker data on your system).
-    ```bash
-    docker system prune -a --volumes
-    ```
-    *(Confirm with 'y' when prompted)*
-3.  **Start Supabase Cleanly:**
-    ```bash
+2.  **Prune Docker System:** (⚠️ CRITICAL WARNING: This will remove ALL unused Docker data on your ENTIRE system, including non-Supabase containers, images, and volumes. Only proceed if you're certain no other Docker projects need to be preserved).    ```bash
     npx supabase start
     ```
 

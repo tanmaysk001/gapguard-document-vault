@@ -2,13 +2,29 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { generateEmbedding, generateQueryEmbedding } from "../lib/ai.ts";
 
-serve(async (req) => {
-  // Simple CORS for testing
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
+// Secure CORS for production and dev
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin");
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    Deno.env.get("PRODUCTION_CORS_ORIGIN")
+  ].filter(Boolean);
+
+  const headers: Record<string, string> = {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type"
   };
+  if (origin && allowedOrigins.includes(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+  }
+  return headers;
+}
+
+serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -29,7 +45,6 @@ serve(async (req) => {
 
     console.log("Generating document embedding...");
     const docEmbedding = await generateEmbedding(sampleDocumentText);
-    
     // Test query embedding  
     const sampleQuery = "When does my passport expire?";
     console.log("Generating query embedding...");
@@ -67,14 +82,13 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Embedding test failed:", error);
-    
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       message: "Gemini embeddings test failed"
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }
-}); 
+});

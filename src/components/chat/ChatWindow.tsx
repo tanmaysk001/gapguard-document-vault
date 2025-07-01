@@ -12,9 +12,8 @@ import { useAuth } from '@clerk/clerk-react';
 interface ChatWindowProps {
   onClose: () => void;
 }
-
 export function ChatWindow({ onClose }: ChatWindowProps) {
-  const { user } = useAuth();
+  const { isSignedIn } = useAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const {
     messages,
@@ -25,8 +24,8 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
     isInitialized
   } = useChatSession();
 
-  // DEBUG: Log chat state for troubleshooting
-  useEffect(() => {
+  if (process.env.NODE_ENV === 'development') {
+    // Debug logging for troubleshooting (development only)
     console.log('[ChatWindow] State Update:', {
       isLoading,
       isInitialized,
@@ -34,7 +33,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
       sessionId,
       messageCount: messages.length,
     });
-  }, [isLoading, isInitialized, error, sessionId, messages]);
+  }
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -100,7 +99,7 @@ export function ChatWindow({ onClose }: ChatWindowProps) {
           {isInitialized && !error && messages.length === 0 && (
             <div className="text-center text-gray-500 py-8">
               <Bot className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-sm">Hi {user?.firstName || 'there'}! 👋</p>
+              <p className="text-sm">Hi there! 👋</p>
               <p className="text-xs mt-2">Ask me anything about your uploaded documents.</p>
               <div className="mt-4 space-y-2">
                 <p className="text-xs font-medium">Try asking:</p>

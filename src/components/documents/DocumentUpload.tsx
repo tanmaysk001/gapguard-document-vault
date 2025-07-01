@@ -10,6 +10,7 @@ import { useSupabase } from '@/hooks/useSupabase';
 import { useDropzone } from 'react-dropzone';
 import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, File as FileIcon } from 'lucide-react';
+import { SUPABASE_URL } from '@/config';
 
 interface DocumentUploadProps {
   onUploadComplete?: () => void;
@@ -34,8 +35,7 @@ const processDocument = async ({
   },
   token: string
 }) => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const edgeFunctionUrl = `${supabaseUrl}/functions/v1/process_document`;
+  const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/process_document`;
 
   return fetch(edgeFunctionUrl, {
     method: "POST",
