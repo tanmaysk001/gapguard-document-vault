@@ -42,7 +42,7 @@ The following is already configured in your migrations:
 
 ### Deployment Steps
 
-1. **Add OpenAI API key** to environment variables
+1. **Add Gemini API key** to environment variables
 2. **Deploy updated Edge Functions** with new embedding logic
 3. **Test with document upload** to verify embeddings generation
 4. **Verify vector search** is working in database
@@ -60,7 +60,7 @@ WHERE user_id = 'your_user_id';
 ### Troubleshooting
 
 **Common Issues:**
-1. **"OPENAI_API_KEY not set"** → Check environment variable configuration
+1. **"GEMINI_API_KEY not set"** → Check environment variable configuration
 2. **"Embedding generation failed"** → Verify API key validity and quota
 3. **"Vector index error"** → Ensure `vector` extension is enabled
 4. **"Permission denied"** → Check RLS policies are correctly applied
@@ -68,5 +68,5 @@ WHERE user_id = 'your_user_id';
 **Debug Steps:**
 1. Check Supabase Edge Function logs
 2. Verify environment variables in dashboard
-3. Test OpenAI API key separately
+3. Test Gemini API key separately
 4. Monitor token usage and quotas 

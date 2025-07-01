@@ -27,22 +27,29 @@ function getCorsHeaders(req: Request) {
     allowedOrigins.push(productionOrigin);
   }
 
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*", // Default to wildcard for development
+  const commonHeaders = {
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-requested-with, accept, origin, user-agent",
-    "Access-Control-Allow-Credentials": "false",
     "Access-Control-Max-Age": "86400", // 24 hours
     "Vary": "Origin"
   };
 
-  // If origin is specified and in allowed list, use it specifically
+  // Secure origin handling - never use wildcard in production
   if (origin && allowedOrigins.includes(origin)) {
-    corsHeaders["Access-Control-Allow-Origin"] = origin;
-    corsHeaders["Access-Control-Allow-Credentials"] = "true";
+    return {
+      ...commonHeaders,
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Credentials": "true"
+    };
   }
-
-  return corsHeaders;
+  
+  // Fallback to production origin if set, otherwise localhost for development
+  const fallbackOrigin = productionOrigin || "http://localhost:3000";
+     return {
+     ...commonHeaders,
+     "Access-Control-Allow-Origin": fallbackOrigin,
+     "Access-Control-Allow-Credentials": "false"
+   };
 }
 
 // In your serve function:
@@ -75,11 +82,20 @@ serve(async (req) => {
 
 ## What This Does
 
-1. **Allows all localhost ports** - Works with any development server
-2. **Handles preflight requests** - Browsers send OPTIONS requests first
-3. **Sets all necessary headers** - Complete CORS configuration
-4. **Production-ready** - Can set PRODUCTION_CORS_ORIGIN environment variable
-5. **Always includes CORS headers** - Both success and error responses
+1. **Secure origin validation** - Only allows explicitly whitelisted origins
+2. **NO wildcard (*) usage** - Prevents security vulnerabilities in production
+3. **Handles preflight requests** - Browsers send OPTIONS requests first
+4. **Environment-specific configuration** - Uses PRODUCTION_CORS_ORIGIN for production
+5. **Credential handling** - Enables credentials only for trusted origins
+6. **Always includes CORS headers** - Both success and error responses
+
+## Security Features
+
+- ✅ **No wildcard origins** - Prevents CORS-based attacks
+- ✅ **Explicit allowlist** - Only trusted domains are allowed
+- ✅ **Environment awareness** - Different behavior for dev vs production
+- ✅ **Secure fallback** - Defaults to production origin or localhost
+- ✅ **Credential protection** - Only enables credentials for whitelisted origins
 
 ## Why CORS Happens
 

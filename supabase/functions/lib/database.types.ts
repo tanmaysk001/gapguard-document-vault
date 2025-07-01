@@ -144,7 +144,7 @@ export type Database = {
           id: string
           required_doc_types: string[] | null
           rule_name: string
-          status: string
+          status: Database["public"]["Enums"]["rule_status"]
           user_id: string
           validity_period_days: number | null
         }
@@ -154,7 +154,7 @@ export type Database = {
           id?: string
           required_doc_types?: string[] | null
           rule_name: string
-          status?: string
+          status?: Database["public"]["Enums"]["rule_status"]
           user_id: string
           validity_period_days?: number | null
         }
@@ -164,7 +164,7 @@ export type Database = {
           id?: string
           required_doc_types?: string[] | null
           rule_name?: string
-          status?: string
+          status?: Database["public"]["Enums"]["rule_status"]
           user_id?: string
           validity_period_days?: number | null
         }
@@ -255,6 +255,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       document_status: "processing" | "valid" | "expiring_soon" | "expired"
+      rule_status: "active" | "suggested" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -375,6 +376,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       document_status: ["processing", "valid", "expiring_soon", "expired"],
+      rule_status: ["active", "suggested", "archived"],
     },
   },
 } as const

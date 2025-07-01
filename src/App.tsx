@@ -9,7 +9,7 @@ import { AuthPage } from './components/auth/AuthPage';
 import { ChatBot } from './components/chat/ChatBot';
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
-import DocumentsPage from "./pages/Documents";
+import DocumentsPage from "./pages/Documents.tsx";
 import RulesPage from "./pages/Rules";
 import NotFound from "./pages/NotFound";
 

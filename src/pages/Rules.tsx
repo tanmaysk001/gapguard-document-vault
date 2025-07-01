@@ -63,7 +63,10 @@ export default function RulesPage() {
       // Group by rule_name (case-insensitive)
       const ruleGroups = new Map<string, Rule[]>();
       suggestedRules.forEach(rule => {
-        const key = rule.rule_name.toLowerCase().trim();
+        const key = rule.rule_name
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, ' ');
         if (!ruleGroups.has(key)) {
           ruleGroups.set(key, []);
         }

@@ -9,7 +9,7 @@
           "-y",
           "@supabase/mcp-server-supabase@latest",
           "--access-token",
-          "sbp_f9a4f4e9cbe4e13305fdfafed21cb40b407833d1"
+          "${SUPABASE_ACCESS_TOKEN}"
         ]
       },
       // Context7 MCP
