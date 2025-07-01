@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -7,12 +6,14 @@ import {
   BarChart3, 
   Settings, 
   ChevronLeft,
-  ChevronRight 
+  ChevronRight,
+  ClipboardList
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Documents', href: '/documents', icon: FileText },
+  { name: 'Rules', href: '/rules', icon: ClipboardList },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];

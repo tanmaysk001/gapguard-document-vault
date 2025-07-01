@@ -7,6 +7,31 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       chat_messages: {
@@ -119,7 +144,7 @@ export type Database = {
           id: string
           required_doc_types: string[] | null
           rule_name: string
-          status: Database["public"]["Enums"]["rule_status"]
+          status: string
           user_id: string
           validity_period_days: number | null
         }
@@ -129,7 +154,7 @@ export type Database = {
           id?: string
           required_doc_types?: string[] | null
           rule_name: string
-          status?: Database["public"]["Enums"]["rule_status"]
+          status?: string
           user_id: string
           validity_period_days?: number | null
         }
@@ -139,7 +164,7 @@ export type Database = {
           id?: string
           required_doc_types?: string[] | null
           rule_name?: string
-          status?: Database["public"]["Enums"]["rule_status"]
+          status?: string
           user_id?: string
           validity_period_days?: number | null
         }
@@ -150,16 +175,13 @@ export type Database = {
           confidence_score: number | null
           created_at: string | null
           doc_category: string | null
-          effective_date: string | null
           expiry_date: string | null
           file_name: string
-          file_path: string | null
-          file_size:. number | null
+          file_size: number | null
           file_type: string | null
           file_url: string
           id: string
           issue_date: string | null
-          reasoning: string | null
           status: Database["public"]["Enums"]["document_status"] | null
           updated_at: string | null
           user_id: string
@@ -168,16 +190,13 @@ export type Database = {
           confidence_score?: number | null
           created_at?: string | null
           doc_category?: string | null
-          effective_date?: string | null
           expiry_date?: string | null
           file_name: string
-          file_path?: string | null
           file_size?: number | null
           file_type?: string | null
           file_url: string
           id?: string
           issue_date?: string | null
-          reasoning?: string | null
           status?: Database["public"]["Enums"]["document_status"] | null
           updated_at?: string | null
           user_id: string
@@ -186,121 +205,15 @@ export type Database = {
           confidence_score?: number | null
           created_at?: string | null
           doc_category?: string | null
-          effective_date?: string | null
           expiry_date?: string | null
           file_name?: string
-          file_path?: string | null
           file_size?: number | null
           file_type?: string | null
           file_url?: string
           id?: string
           issue_date?: string | null
-          reasoning?: string | null
           status?: Database["public"]["Enums"]["document_status"] | null
           updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      gaps: {
-        Row: {
-          checklist_id: string | null
-          created_at: string | null
-          days_left: number | null
-          doc_id: string | null
-          id: string
-          required_doc_type: string | null
-          status: Database["public"]["Enums"]["gap_status"] | null
-          user_id: string | null
-        }
-        Insert: {
-          checklist_id?: string | null
-          created_at?: string | null
-          days_left?: number | null
-          doc_id?: string | null
-          id?: string
-          required_doc_type?: string | null
-          status?: Database["public"]["Enums"]["gap_status"] | null
-          user_id?: string | null
-        }
-        Update: {
-          checklist_id?: string | null
-          created_at?: string | null
-          days_left?: number | null
-          doc_id?: string | null
-          id?: string
-          required_doc_type?: string | null
-          status?: Database["public"]["Enums"]["gap_status"] | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_gaps_doc"
-            columns: ["doc_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      processing_logs: {
-        Row: {
-          created_at: string | null
-          document_id: string | null
-          error_message: string | null
-          gemini_cost_usd: number | null
-          id: string
-          processing_time_ms: number | null
-          request_id: string
-          status: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          document_id?: string | null
-          error_message?: string | null
-          gemini_cost_usd?: number | null
-          id?: string
-          processing_time_ms?: number | null
-          request_id: string
-          status: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          document_id?: string | null
-          error_message?: string | null
-          gemini_cost_usd?: number | null
-          id?: string
-          processing_time_ms?: number | null
-          request_id?: string
-          status?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "processing_logs_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rate_limit_usage: {
-        Row: {
-          last_request_at: string | null
-          request_count: number | null
-          user_id: string
-        }
-        Insert: {
-          last_request_at?: string | null
-          request_count?: number | null
-          user_id: string
-        }
-        Update: {
-          last_request_at?: string | null
-          request_count?: number | null
           user_id?: string
         }
         Relationships: []
@@ -308,7 +221,7 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string | null
-          id:. string
+          id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
@@ -331,30 +244,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      binary_quantize: {
-        Args: { "": string } | { "": unknown }
-        Returns: unknown
-      }
-      get_current_user_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      halfvec_avg: {
-        Args: { "": number[] }
-        Returns: unknown
-      }
-      halfvec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      halfvec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      halfvec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
       has_role: {
         Args: {
           _user_id: string
@@ -362,98 +251,10 @@ export type Database = {
         }
         Returns: boolean
       }
-      hnsw_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_sparsevec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnswhandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflathandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      l2_norm: {
-        Args: { "": unknown } | { "": unknown }
-        Returns: number
-      }
-      l2_normalize: {
-        Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: unknown
-      }
-      match_documents: {
-        Args: {
-          query_embedding: string
-          match_threshold?: number
-          match_count?: number
-        }
-        Returns: {
-          id: string
-          document_id: string
-          content_chunk: string
-          metadata: Json
-          similarity: number
-        }[]
-      }
-      sparsevec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      sparsevec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      sparsevec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
-      vector_avg: {
-        Args: { "": number[] }
-        Returns: string
-      }
-      vector_dims: {
-        Args: { "": string } | { "": unknown }
-        Returns: number
-      }
-      vector_norm: {
-        Args: { "": string }
-        Returns: number
-      }
-      vector_out: {
-        Args: { "": string }
-        Returns: unknown
-      }
-      vector_send: {
-        Args: { "": string }
-        Returns: string
-      }
-      vector_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
     }
     Enums: {
       app_role: "admin" | "user"
       document_status: "processing" | "valid" | "expiring_soon" | "expired"
-      gap_status: "missing" | "expired" | "expiring_soon" | "valid"
-      rule_status: "active" | "inactive" | "suggested"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -567,12 +368,14 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["admin", "user"],
       document_status: ["processing", "valid", "expiring_soon", "expired"],
-      gap_status: ["missing", "expired", "expiring_soon", "valid"],
-      rule_status: ["active", "inactive", "suggested"],
     },
   },
 } as const
+

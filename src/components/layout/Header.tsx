@@ -9,7 +9,10 @@ export function Header() {
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-8">
-          <h1 className="text-2xl font-bold text-gray-900">GapGuard</h1>
+          <div className="flex items-center space-x-2">
+            <img src="/logo.png" alt="GapGuard Logo" className="h-8 w-8" />
+            <h1 className="text-2xl font-bold text-gray-900">GapGuard</h1>
+          </div>
           
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />

@@ -26,21 +26,22 @@ export function StatusBadge({ document }: StatusBadgeProps) {
 
     const now = new Date();
     const expiry = new Date(expiry_date);
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(now.getDate() + 30);
+
+    // Create new Date objects for the start of the day to avoid mutation
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfExpiry = new Date(expiry.getFullYear(), expiry.getMonth(), expiry.getDate());
     
-    // Set hours to 0 to compare dates only
-    now.setHours(0, 0, 0, 0);
-    expiry.setHours(0, 0, 0, 0);
+    const thirtyDaysFromNow = new Date(startOfToday);
+    thirtyDaysFromNow.setDate(startOfToday.getDate() + 30);
     
-    if (expiry < now) {
+    if (startOfExpiry < startOfToday) {
       return {
         label: 'Expired',
         className: 'bg-red-100 text-red-800 border-red-200'
       };
     }
     
-    if (expiry <= thirtyDaysFromNow) {
+    if (startOfExpiry <= thirtyDaysFromNow) {
       return {
         label: 'Expiring Soon',
         className: 'bg-orange-100 text-orange-800 border-orange-200'

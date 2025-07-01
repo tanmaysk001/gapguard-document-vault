@@ -89,7 +89,7 @@ export function DocumentUpload({ onUploadComplete }: DocumentUploadProps) {
         newFiles[index].status = 'uploading';
         return newFiles;
       });
-
+      
       const { file } = uploadableFile;
       const filePath = `${user.id}/${file.name}`;
 
@@ -141,11 +141,11 @@ export function DocumentUpload({ onUploadComplete }: DocumentUploadProps) {
       }
     });
 
-    await Promise.all(uploadPromises);
+      await Promise.all(uploadPromises);
     setUploading(false);
     toast({ title: "Uploads Complete", description: "All files have been processed." });
     if (onUploadComplete) {
-      onUploadComplete();
+    onUploadComplete();
     }
   };
 

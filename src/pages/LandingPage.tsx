@@ -17,7 +17,7 @@ export default function LandingPage() {
       <header className="px-6 py-4">
         <nav className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Shield className="h-8 w-8 text-blue-600" />
+            <img src="/logo.png" alt="GapGuard Logo" className="h-8 w-8" />
             <span className="text-2xl font-bold text-gray-900">GapGuard</span>
           </div>
           <div className="flex items-center space-x-4">

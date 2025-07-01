@@ -1,4 +1,4 @@
-
+import { useCallback } from 'react';
 import { toast as sonnerToast } from "sonner";
 
 export interface ToastProps {
@@ -8,7 +8,7 @@ export interface ToastProps {
 }
 
 export const useToast = () => {
-  const toast = ({ title, description, variant = "default" }: ToastProps) => {
+  const toast = useCallback(({ title, description, variant = "default" }: ToastProps) => {
     if (variant === "destructive") {
       sonnerToast.error(title || "Error", {
         description,
@@ -18,7 +18,7 @@ export const useToast = () => {
         description,
       });
     }
-  };
+  }, []);
 
   // Return empty toasts array since we're using sonner directly
   return { 
